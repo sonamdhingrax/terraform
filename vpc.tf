@@ -188,7 +188,3 @@ resource "aws_network_acl_association" "allow_http_ingress_egress" {
 
 #   value = aws_subnet.subnets[each.key].name
 # }
-
-output "security_group" {
-  value = aws_security_group.allow_http_https.id
-}

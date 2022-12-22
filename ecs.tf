@@ -50,9 +50,3 @@ resource "aws_ecs_task_definition" "openstor_task_definition" {
     cpu_architecture        = "X86_64"
   }
 }
-
-
-output "ecs_task_definition" {
-  value = "${aws_ecs_task_definition.openstor_task_definition.id}:${aws_ecs_task_definition.openstor_task_definition.revision}"
-
-}
