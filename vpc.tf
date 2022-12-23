@@ -1,21 +1,21 @@
-resource "aws_vpc" "app" {
+resource "aws_vpc" "app_vpc" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
   tags = {
-    Name = "app"
+    Name = "${var.app_name}_vpc"
   }
 }
 
 resource "aws_internet_gateway" "internet-gw" {
-  vpc_id = aws_vpc.app.id
+  vpc_id = aws_vpc.app_vpc.id
 
   tags = {
-    Name = "main"
+    Name = "${var.app_name}_vpc_internet_gw"
   }
 }
 
 resource "aws_subnet" "subnets" {
-  vpc_id                  = aws_vpc.app.id
+  vpc_id                  = aws_vpc.app_vpc.id
   for_each                = var.subnet_definition
   cidr_block              = each.value.cidr
   availability_zone       = each.value.az
@@ -27,7 +27,7 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_default_route_table" "private_route" {
-  default_route_table_id = aws_vpc.app.default_route_table_id
+  default_route_table_id = aws_vpc.app_vpc.default_route_table_id
 
   tags = {
     "Name" = "private"
@@ -35,7 +35,7 @@ resource "aws_default_route_table" "private_route" {
 }
 
 resource "aws_route_table" "public_route" {
-  vpc_id = aws_vpc.app.id
+  vpc_id = aws_vpc.app_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.internet-gw.id
@@ -55,12 +55,12 @@ resource "aws_route_table_association" "public" {
 resource "aws_security_group" "allow_http_https" {
   name        = "allow_http_https"
   description = "Allow http and https inbound traffic"
-  vpc_id      = aws_vpc.app.id
+  vpc_id      = aws_vpc.app_vpc.id
 
   ingress {
     description      = "http from Internet"
-    from_port        = 80
-    to_port          = 80
+    from_port        = var.app_host_port
+    to_port          = var.app_host_port
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
@@ -89,7 +89,7 @@ resource "aws_security_group" "allow_http_https" {
 }
 
 resource "aws_default_network_acl" "default" {
-  default_network_acl_id = aws_vpc.app.default_network_acl_id
+  default_network_acl_id = aws_vpc.app_vpc.default_network_acl_id
 
   ingress {
     protocol   = -1
@@ -115,15 +115,15 @@ resource "aws_default_network_acl" "default" {
 }
 
 resource "aws_network_acl" "public_web" {
-  vpc_id = aws_vpc.app.id
+  vpc_id = aws_vpc.app_vpc.id
 
   egress {
     protocol   = "tcp"
     rule_no    = 200
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 80
-    to_port    = 80
+    from_port  = var.app_host_port
+    to_port    = var.app_host_port
   }
 
   egress {
@@ -149,8 +149,8 @@ resource "aws_network_acl" "public_web" {
     rule_no    = 100
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 80
-    to_port    = 80
+    from_port  = var.app_host_port
+    to_port    = var.app_host_port
   }
 
   ingress {

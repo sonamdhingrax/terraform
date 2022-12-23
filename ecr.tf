@@ -1,5 +1,5 @@
-resource "aws_ecr_repository" "openstor_repo" {
-  name                 = "openstor"
+resource "aws_ecr_repository" "app_repo" {
+  name                 = var.app_name
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 

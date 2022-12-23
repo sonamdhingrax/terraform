@@ -1,5 +1,5 @@
-resource "aws_ecs_cluster" "openstor_cluster" {
-  name = "openstor_cluster"
+resource "aws_ecs_cluster" "app_cluster" {
+  name = "${var.app_name}_cluster"
 
   setting {
     name  = "containerInsights"
@@ -8,8 +8,8 @@ resource "aws_ecs_cluster" "openstor_cluster" {
 }
 
 
-resource "aws_ecs_cluster_capacity_providers" "openstor_fargate" {
-  cluster_name = aws_ecs_cluster.openstor_cluster.id
+resource "aws_ecs_cluster_capacity_providers" "app_fargate" {
+  cluster_name = aws_ecs_cluster.app_cluster.id
 
   capacity_providers = ["FARGATE"]
 
@@ -21,8 +21,8 @@ resource "aws_ecs_cluster_capacity_providers" "openstor_fargate" {
 }
 
 
-resource "aws_ecs_task_definition" "openstor_task_definition" {
-  family                   = "openstor_task"
+resource "aws_ecs_task_definition" "app_task_definition" {
+  family                   = "${var.app_name}_task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
@@ -31,15 +31,15 @@ resource "aws_ecs_task_definition" "openstor_task_definition" {
   execution_role_arn       = aws_iam_role.ecs_task_role.arn
   container_definitions = jsonencode([
     {
-      name      = "openstor_container"
-      image     = "${aws_ecr_repository.openstor_repo.repository_url}:v1"
+      name      = "${var.app_name}_container"
+      image     = "${aws_ecr_repository.app_repo.repository_url}:v1"
       cpu       = 256
       memory    = 512
       essential = true
       portmappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = var.app_container_port
+          hostPort      = var.app_host_port
         }
       ]
     }
